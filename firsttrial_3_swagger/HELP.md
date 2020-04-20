@@ -22,7 +22,7 @@ Its part of a spring boot tutorial containing follwing chapters
 
 ## Expose REST service documentation with Swagger (OpenAPI standard)
 
-1.  add dependencies in project pom file
+### Add dependencies in project pom file
 <pre><code>
 	&lt;!-- Swagger Spring Fox Integration 2.8.0--&gt;
 	&lt;dependency&gt;
@@ -42,7 +42,7 @@ Its part of a spring boot tutorial containing follwing chapters
     &lt;/dependency&gt;
 </pre></code>
 
-2. Create swagger config 
+### Create swagger config class
 * Create new package (...) configuration
 * Create new class "FirstTrialConfig"
 * Create class annotations
@@ -86,7 +86,7 @@ Its part of a spring boot tutorial containing follwing chapters
 			.build();
 	}
 </pre></code>
-<br> browser path for swagger page
+<br> endpoint (browser) path for swagger page and class pathes for swagger generation or retrieval of predefined swagger file
 <pre><code>			
 	//Swagger
 	@Override //Required to show swagger UI
@@ -97,3 +97,72 @@ Its part of a spring boot tutorial containing follwing chapters
 		  .addResourceLocations("classpath:/META-INF/resources/webjars/");
 	}
 </pre></code>
+
+### Enhance Configuration in application.properties file to ignore swagger severity warnings
+<pre><code>
+		#Ignore severity warnings
+		logging.level.io.swagger.models.parameters.AbstractSerializableParameter=error	
+</pre></code>		
+### Start application and use swagger ui in browser
+* Start swagger ui with http://localhost:8080/swagger-ui.html
+* Send requests for single methods.
+<br>Detailed description per method contains default values - to be enhanced by annotations in controller class
+<br> Look at model definitions end of page for both customer entity, response entity and ErrorsResponse. Detailed information for attributes missing - to be enhanced by annotations in beans
+	
+### Add swagger annotations in REST controller class (if not partly existing for input validation purpose)
+* create class annotation
+<pre><code>		
+	@Api(value="Customer Demo Management System")
+</pre></code>				
+* create method annotations (description, input parameters, http-code + response model combinations) - example getAllcustomersWithPagination
+<pre><code>		
+	@ApiOperation(value = "View a list of available customers", response = CustomerEntity.class, responseContainer = "List")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Successfully retrieved list of customers", response = CustomerEntity.class, responseContainer = "List"),
+			@ApiResponse(code = 401, message = "You are not authorized to view the resource", response = ErrorsResponse.class),
+			@ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden", response = ErrorsResponse.class),
+			@ApiResponse(code = 404, message = "The resource you were trying to reach is not found", response = ErrorsResponse.class)
+			})
+</pre></code>						
+<br> Refresh swagger page and check method changes	
+		
+### Add swagger annotations in customer bean
+* Create class annotation
+<pre><code>
+	@ApiModel(description = "Attributes single Customer")
+</pre></code>		
+* Create attribute annotations - example for first name:
+<pre><code>
+	 @NotNull //Input Validation
+	@Size(min=0, max = 255) //Input Validation + Swagger Output
+	@ApiModelProperty(required = true, dataType = "String", notes  = "first name of the customer", position = 2, example = "Harry") //Swagger
+</pre></code>
+<br> Example email:
+<pre><code>
+	//RFC 5321 for mail adress length
+	@NotNull //Input Validation
+	@Size(min=0, max = 320) //Input Validation + Swagger Output
+	@Email //Input Validation
+	@ApiModelProperty(required = true, dataType = "String", notes  = "last name of the customer, max. length=320 (RFC 3696), format: valid email format (must contain ... localpart(max. 64 chars)@hostname.topleveldomain(max 255 chars))",  example = "harry.potter@hogwarts.com", position = 4) //Swagger
+</pre></code>		
+<br> Refresh swagger page and check model changes	
+
+### Add swagger annotations in response error beans
+* class ResponseErrors - create class annotation
+<pre><code>
+	@ApiModel(description = "List of errors - by default each method might provides 1..n errors in on response")
+</pre></code>
+* create attribute annotations
+<pre><code>
+	@ApiModelProperty(required = true, dataType = "ErrorResponse", notes  = "List of errors")
+</pre></code>
+<br>
+* class ResponseErrors - create class annotation
+<pre><code>
+	@ApiModel(description = "Standard error format")
+</pre></code>			
+* create attribute annotations - example timestamp
+<pre><code>
+	@ApiModelProperty(required = true, dataType = "String", notes  = "timestamp (UTC), when the error occured, JSONZ format", position = 1, example = "2020-04-02T08:09:18.687701800Z") //Swagger
+</pre></code>
+<br> Refresh swagger page and check error model changes
